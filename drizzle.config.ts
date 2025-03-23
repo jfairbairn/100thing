@@ -1,14 +1,14 @@
-import { defineConfig } from 'drizzle-kit';
-if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
+import type { Config } from 'drizzle-kit';
 
-export default defineConfig({
+export default {
 	schema: './src/lib/server/db/schema.ts',
-
+	out: './drizzle',
+	driver: 'pg',
 	dbCredentials: {
-		url: process.env.DATABASE_URL
+		host: 'localhost',
+		port: 5432,
+		user: 'postgres',
+		password: 'postgres',
+		database: '100thing'
 	},
-
-	verbose: true,
-	strict: true,
-	dialect: 'postgresql'
-});
+} satisfies Config;
