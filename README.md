@@ -1,38 +1,73 @@
-# sv
+# 100 Things App
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A productivity app inspired by Visakan Veerasamy's "Do 100 Things" approach. This app helps you break down your goals into smaller, manageable actions and track your progress towards completing 100 iterations of each action.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Create projects to organize related actions
+- Add actions with descriptions and target counts
+- Track progress with quick increment buttons
+- View statistics and progress for each action
+- Modern, clean user interface
 
+## Prerequisites
+
+- Node.js 18 or later
+- pnpm
+- PostgreSQL
+- Docker (optional, for running PostgreSQL)
+
+## Setup
+
+1. Clone the repository:
 ```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+git clone https://github.com/yourusername/100thing.git
+cd 100thing
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
+2. Install dependencies:
 ```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm install
 ```
 
-## Building
+3. Set up the database:
+   - Option 1: Using Docker (recommended)
+   ```bash
+   pnpm db:start
+   ```
+   
+   - Option 2: Use your own PostgreSQL instance
+   - Create a database named `100thing`
+   - Update the `DATABASE_URL` in `.env` if needed
 
-To create a production version of your app:
-
+4. Initialize the database:
 ```bash
-npm run build
+pnpm db:push
 ```
 
-You can preview the production build with `npm run preview`.
+5. Start the development server:
+```bash
+pnpm dev
+```
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+The app will be available at http://localhost:5174
+
+## Usage
+
+1. Create a new project by entering a name and clicking "Create Project"
+2. Click on a project to add actions to it
+3. For each action, enter a title and description
+4. Track progress by clicking the +1 or +5 buttons
+5. Monitor your progress towards completing 100 iterations of each action
+
+## Development
+
+- `pnpm dev` - Start the development server
+- `pnpm build` - Build for production
+- `pnpm preview` - Preview the production build
+- `pnpm test` - Run tests
+- `pnpm db:studio` - Open Drizzle Studio to manage the database
+
+## License
+
+MIT
