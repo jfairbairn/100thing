@@ -40,8 +40,21 @@
       })
     });
     
-    const action = await response.json();
-    selectedProject.actions = [...(selectedProject.actions || []), action];
+    const newAction = await response.json();
+    
+    // Update both selectedProject and projects array to trigger reactivity
+    if (selectedProject) {
+      const updatedActions = [...(selectedProject.actions || []), newAction];
+      const updatedProject = {
+        ...selectedProject,
+        actions: updatedActions
+      };
+      selectedProject = updatedProject;
+      projects = projects.map(p => 
+        p.id === updatedProject.id ? updatedProject : p
+      );
+    }
+    
     newActionTitle = '';
     newActionDescription = '';
   }
@@ -58,10 +71,20 @@
     
     const { progress: newProgress, action: updatedAction } = await response.json();
     
-    // Update the action in the selected project
+    // Update the action in the selected project and trigger reactivity
     if (selectedProject) {
-      selectedProject.actions = (selectedProject.actions || []).map(a => 
+      const updatedActions = (selectedProject.actions || []).map(a => 
         a.id === updatedAction.id ? updatedAction : a
+      );
+      // Force reactivity by reassigning the array
+      const updatedProject = {
+        ...selectedProject,
+        actions: updatedActions
+      };
+      selectedProject = updatedProject;
+      // Also update the project in the projects array to maintain consistency
+      projects = projects.map(p => 
+        p.id === updatedProject.id ? updatedProject : p
       );
     }
   }
