@@ -1,15 +1,33 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Action } from '$lib/types';
+  import confetti from 'canvas-confetti';
 
   let actions: Action[] = [];
   let newActionTitle = '';
   let newActionDescription = '';
   let actionToDelete: Action | null = null;
   let showCreateForm = false;
+  let celebratingAction: Action | null = null;
 
   $: activeActions = actions.filter(a => !a.completed);
   $: completedActions = actions.filter(a => a.completed);
+
+  function celebrateCompletion(action: Action) {
+    celebratingAction = action;
+    
+    // Trigger confetti animation
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+
+    // Hide celebration after 3 seconds
+    setTimeout(() => {
+      celebratingAction = null;
+    }, 3000);
+  }
 
   async function loadActions() {
     const response = await fetch('/api/actions');
@@ -52,6 +70,11 @@
     actions = actions.map(a => 
       a.id === updatedAction.id ? updatedAction : a
     );
+
+    // Check if this update completed the action
+    if (!action.completed && updatedAction.completed) {
+      celebrateCompletion(updatedAction);
+    }
   }
 
   async function deleteAction(action: Action) {
@@ -238,6 +261,19 @@
         >
           Delete
         </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Add celebration overlay -->
+{#if celebratingAction}
+  <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 transform transition-all duration-500 scale-100 animate-bounce">
+      <div class="text-center">
+        <div class="text-6xl mb-4 animate-spin">🎉</div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">Congratulations!</h3>
+        <p class="text-lg text-gray-600">You've completed "{celebratingAction.title}"!</p>
       </div>
     </div>
   </div>
