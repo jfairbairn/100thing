@@ -115,6 +115,7 @@
   async function handleArchive(action: Action) {
     try {
         await actionsStore.archiveAction(action);
+        actionToArchive = null;
     } catch (error) {
         console.error('Failed to archive:', error);
     }
@@ -123,6 +124,7 @@
   async function handleUnarchive(action: Action) {
     try {
         await actionsStore.unarchiveAction(action);
+        actionToUnarchive = null;
     } catch (error) {
         console.error('Failed to unarchive:', error);
     }

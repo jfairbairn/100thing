@@ -207,10 +207,10 @@ const createActionsStore = () => {
 
   async function archiveAction(action: Action) {
     try {
-      const [updatedAction] = await fetchWithAuth(getApiUrl('/api/actions'), {
+      const updatedAction = await fetchWithAuth(getApiUrl(`/api/actions/${action.id}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: action.id, completed: true })
+        body: JSON.stringify({ completed: true })
       });
       update(actions => actions.map(a => a.id === action.id ? updatedAction : a));
     } catch (error) {
@@ -221,10 +221,10 @@ const createActionsStore = () => {
 
   async function unarchiveAction(action: Action) {
     try {
-      const [updatedAction] = await fetchWithAuth(getApiUrl('/api/actions'), {
+      const updatedAction = await fetchWithAuth(getApiUrl(`/api/actions/${action.id}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: action.id, completed: false })
+        body: JSON.stringify({ completed: false })
       });
       update(actions => actions.map(a => a.id === action.id ? updatedAction : a));
     } catch (error) {
