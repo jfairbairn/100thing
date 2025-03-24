@@ -23,17 +23,7 @@
     isOffline = actionsStore.isOffline();
   });
 
-  $: activeActions = actions
-    .filter(a => !a.completed)
-    .sort((a, b) => {
-      // If neither action has progress, maintain original order
-      if (a.currentCount === 0 && b.currentCount === 0) return 0;
-      // If only one action has no progress, it should come first
-      if (a.currentCount === 0) return -1;
-      if (b.currentCount === 0) return 1;
-      // For actions with progress, sort by current count (ascending)
-      return a.currentCount - b.currentCount;
-    });
+  $: activeActions = actions.filter(a => !a.completed);
   $: completedActions = actions.filter(a => a.completed);
 
   function celebrateCompletion(action: Action) {
