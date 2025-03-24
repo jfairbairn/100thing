@@ -71,7 +71,7 @@
           bind:value={newActionDescription}
           placeholder="Action description"
           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
+        ></textarea>
         <button
           on:click={createAction}
           class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
