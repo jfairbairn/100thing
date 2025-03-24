@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/db';
-import { action } from '$lib/server/db/schema';
+import { action, progress } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const PATCH: RequestHandler = async ({ request, params }) => {
@@ -18,8 +18,17 @@ export const PATCH: RequestHandler = async ({ request, params }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params }) => {
+  const actionId = parseInt(params.id);
+  
+  // First delete all related progress records
+  await db
+    .delete(progress)
+    .where(eq(progress.actionId, actionId));
+    
+  // Then delete the action
   await db
     .delete(action)
-    .where(eq(action.id, parseInt(params.id)));
+    .where(eq(action.id, actionId));
+    
   return new Response(null, { status: 204 });
 }; 
