@@ -154,8 +154,10 @@
           <div class="bg-white rounded-lg shadow p-6">
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
-                <p class="mt-1 text-sm text-gray-500">{action.description || 'No description'}</p>
+                <div class="flex items-baseline gap-2">
+                  <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
+                  <span class="text-sm text-gray-600">{action.currentCount}/{action.targetCount}</span>
+                </div>
               </div>
               <button
                 on:click={() => actionToDelete = action}
@@ -168,32 +170,24 @@
               </button>
             </div>
             
-            <div class="mt-4 flex items-center justify-between">
-              <div class="flex-1 mr-4">
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
-                    style="width: {(action.currentCount / action.targetCount) * 100}%"
-                  ></div>
-                </div>
-                <div class="text-sm text-gray-600 mt-1">
-                  {action.currentCount}/{action.targetCount}
-                </div>
+            <div class="mt-3">
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+                  style="width: {(action.currentCount / action.targetCount) * 100}%"
+                ></div>
               </div>
-              <div class="flex gap-2">
-                <button
-                  on:click={() => recordProgress(action, 1)}
-                  class="px-2 py-1 text-sm bg-green-100 text-green-800 rounded-md hover:bg-green-200"
-                >
-                  +1
-                </button>
-                <button
-                  on:click={() => recordProgress(action, 5)}
-                  class="px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200"
-                >
-                  +5
-                </button>
-              </div>
+            </div>
+
+            <p class="mt-3 text-sm text-gray-500">{action.description || 'No description'}</p>
+            
+            <div class="mt-4 flex justify-end">
+              <button
+                on:click={() => recordProgress(action, 1)}
+                class="px-4 py-3 text-base bg-green-100 text-green-800 rounded-md hover:bg-green-200 min-w-[3rem]"
+              >
+                +1
+              </button>
             </div>
           </div>
         {/each}
@@ -209,8 +203,19 @@
             <div class="bg-white rounded-lg shadow p-6 opacity-75">
               <div class="flex justify-between items-start">
                 <div>
-                  <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
-                  <p class="mt-1 text-sm text-gray-500">{action.description || 'No description'}</p>
+                  <div class="flex items-baseline gap-2">
+                    <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
+                    <span class="text-sm text-gray-600">{action.currentCount}/{action.targetCount}</span>
+                  </div>
+                  <div class="mt-2">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        class="bg-green-600 h-2.5 rounded-full"
+                        style="width: 100%"
+                      ></div>
+                    </div>
+                  </div>
+                  <p class="mt-2 text-sm text-gray-500">{action.description || 'No description'}</p>
                 </div>
                 <button
                   on:click={() => actionToDelete = action}
@@ -224,12 +229,6 @@
               </div>
               
               <div class="mt-4">
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    class="bg-green-600 h-2.5 rounded-full"
-                    style="width: 100%"
-                  ></div>
-                </div>
                 <div class="text-sm text-gray-600 mt-1">
                   {action.currentCount}/{action.targetCount} - Completed!
                 </div>

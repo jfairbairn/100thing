@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "100thing",
   "version": "0.1.0",
-  "identifier": "com.netlagoon.100thing.dev",
+  "identifier": "com.netlagoon.hundredthing.dev",
   "build": {
     "frontendDist": "../static",
     "devUrl": "http://localhost:5173",
