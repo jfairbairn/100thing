@@ -76,7 +76,7 @@
     </div>
 
     <!-- Create Action Button -->
-    <div class="mt-8 flex justify-end">
+    <div class="mt-8 flex justify-start">
       <button
         on:click={() => showCreateForm = !showCreateForm}
         class="inline-flex items-center px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 {showCreateForm ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500'}"
@@ -122,7 +122,9 @@
 
     <!-- Active Actions -->
     <div class="mt-8">
-      <h2 class="text-2xl font-bold text-gray-900 mb-4">Active Actions</h2>
+      {#if activeActions.length > 0}
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Active Actions</h2>
+      {/if}
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {#each activeActions as action}
           <div class="bg-white rounded-lg shadow p-6">
