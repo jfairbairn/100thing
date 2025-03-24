@@ -130,9 +130,11 @@
   onMount(loadActions);
 </script>
 
-<div class="api-url-display bg-gray-100 p-2 text-sm text-gray-600 rounded-md mb-4">
-  API URL: {getApiUrl('') || 'Not set'}
-</div>
+{#if isDevMode}
+  <div class="api-url-display bg-gray-100 p-2 text-sm text-gray-600 rounded-md mb-4">
+    API URL: {getApiUrl('') || 'Not set'}
+  </div>
+{/if}
 
 <div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
   <div class="max-w-7xl mx-auto">
@@ -513,9 +515,14 @@
   </div>
 {/if}
 
+<!-- Add online/offline indicator -->
+<div class="fixed top-4 right-4 z-50">
+  <div class="w-3 h-3 rounded-full {isOffline ? 'bg-red-500' : 'bg-green-500'}"></div>
+</div>
+
 <!-- Add offline toggle in dev mode -->
 {#if isDevMode}
-  <div class="fixed top-4 right-4 z-50">
+  <div class="fixed bottom-4 right-4 z-50">
     <button
       on:click={toggleOffline}
       class="px-4 py-2 rounded-md {isOffline ? 'bg-red-500' : 'bg-green-500'} text-white font-medium"
