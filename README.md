@@ -4,7 +4,6 @@ A productivity app inspired by Visakan Veerasamy's "Do 100 Things" approach. Thi
 
 ## Features
 
-- Create projects to organize related actions
 - Add actions with descriptions and target counts
 - Track progress with quick increment buttons
 - View statistics and progress for each action
@@ -50,15 +49,13 @@ pnpm db:push
 pnpm dev
 ```
 
-The app will be available at http://localhost:5174
+The app will be available at http://localhost:5173
 
 ## Usage
 
-1. Create a new project by entering a name and clicking "Create Project"
-2. Click on a project to add actions to it
-3. For each action, enter a title and description
-4. Track progress by clicking the +1 or +5 buttons
-5. Monitor your progress towards completing 100 iterations of each action
+1. Add new actions by entering a title and description
+2. Track progress by clicking the +1 or +5 buttons
+3. Monitor your progress towards completing 100 iterations of each action
 
 ## Development
 
