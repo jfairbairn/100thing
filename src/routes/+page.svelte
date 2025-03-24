@@ -5,6 +5,7 @@
   import { getApiUrl } from '$lib/config';
   import { actionsStore } from '$lib/stores/actions';
   import { auth } from '$lib/stores/auth';
+  import { theme } from '$lib/stores/theme';
   import AuthForm from '$lib/components/AuthForm.svelte';
 
   let actions: Action[] = [];
@@ -156,25 +157,30 @@
 </script>
 
 {#if $auth.isLoading}
-  <div class="min-h-screen flex items-center justify-center">
+  <div class="min-h-screen flex items-center justify-center bg-warm-100 dark:bg-gray-800">
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
   </div>
 {:else if !$auth.user}
   <AuthForm />
 {:else}
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-8 bg-warm-100 dark:bg-gray-800 min-h-screen">
     <!-- Navigation Bar -->
     <div class="flex justify-between items-center mb-8">
       <div class="flex items-center space-x-4">
-        <h1 class="text-2xl font-bold text-gray-900">100 Things</h1>
+        <h1 class="text-2xl font-bold text-gray-700 dark:text-gray-100">100 Things</h1>
       </div>
       <div class="flex items-center space-x-4">
         <!-- Desktop menu -->
         <div class="hidden md:flex items-center space-x-4">
-          <span class="text-gray-600">Welcome, {$auth.user.name}</span>
+          <span class="text-gray-500 dark:text-gray-300">Welcome, {$auth.user.name}</span>
+          {#if isDevMode}
+            <span class="text-gray-500 dark:text-gray-400 text-sm">
+              API URL: {getApiUrl('') || 'Not set'}
+            </span>
+          {/if}
           <button
             on:click={handleLogout}
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Logout
           </button>
@@ -184,7 +190,7 @@
         <div class="md:hidden">
           <button
             on:click={() => showMenu = !showMenu}
-            class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+            class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
             aria-expanded="false"
           >
             <span class="sr-only">Open main menu</span>
@@ -206,15 +212,20 @@
     {#if showMenu}
       <div class="md:hidden">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <div class="px-3 py-2 text-sm text-gray-600">
+          <div class="px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
             Welcome, {$auth.user.name}
           </div>
+          {#if isDevMode}
+            <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+              API URL: {getApiUrl('') || 'Not set'}
+            </div>
+          {/if}
           <button
             on:click={() => {
               handleLogout();
               showMenu = false;
             }}
-            class="w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            class="w-full text-left px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Logout
           </button>
@@ -223,24 +234,18 @@
     {/if}
 
     {#if error}
-      <div class="mb-4 p-4 bg-red-50 text-red-700 rounded-md">
+      <div class="mb-4 p-4 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-100 rounded-md">
         {error}
       </div>
     {/if}
 
-    {#if isDevMode}
-      <div class="api-url-display bg-gray-100 p-2 text-sm text-gray-600 rounded-md">
-        API URL: {getApiUrl('') || 'Not set'}
-      </div>
-    {/if}
-
-    <div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-warm-100 dark:bg-gray-800">
       <div class="max-w-7xl mx-auto">
         <!-- Create Action Button -->
         <div class="flex justify-start">
           <button
             on:click={() => showCreateForm = !showCreateForm}
-            class="inline-flex items-center px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 {showCreateForm ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500'}"
+            class="inline-flex items-center px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 {showCreateForm ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 focus:ring-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500'}"
             aria-label={showCreateForm ? "Hide create form" : "Show create form"}
           >
             {#if !showCreateForm}
@@ -248,25 +253,25 @@
                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
               </svg>
             {/if}
-            {showCreateForm ? 'Cancel' : 'Create Action'}
+            {showCreateForm ? 'Cancel' : 'Do new thing'}
           </button>
         </div>
 
         <!-- Action Creation -->
         {#if showCreateForm}
-          <div class="mt-4 bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold mb-4">Create New Action</h2>
+          <div class="mt-4 bg-white dark:bg-gray-700 rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-100">Create New Action</h2>
             <div class="space-y-4">
               <input
                 type="text"
                 bind:value={newActionTitle}
                 placeholder="Action title"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
               <textarea
                 bind:value={newActionDescription}
                 placeholder="Action description"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               ></textarea>
               <button
                 on:click={() => {
@@ -284,22 +289,22 @@
         <!-- Active Actions -->
         <div class="mt-8">
           {#if activeActions.length > 0}
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Active Actions</h2>
+            <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-4">Doing</h2>
           {/if}
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {#each activeActions as action}
-              <div class="bg-white rounded-lg shadow p-6">
+              <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-6">
                 <div class="flex justify-between items-start">
                   <div>
                     <div class="flex flex-wrap items-baseline gap-2">
-                      <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
-                      <span class="text-sm text-gray-600">{action.currentCount}/{action.targetCount}</span>
+                      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-100">{action.title}</h3>
+                      <span class="text-sm text-gray-500 dark:text-gray-300">{action.currentCount}/{action.targetCount}</span>
                     </div>
                   </div>
                   <div class="relative">
                     <button
                       on:click={() => action.showDropdown = !action.showDropdown}
-                      class="text-gray-400 hover:text-gray-500"
+                      class="text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200"
                       aria-label="More options"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -307,7 +312,7 @@
                       </svg>
                     </button>
                     {#if action.showDropdown}
-                      <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
                         <div class="py-1" role="menu">
                           {#if !action.completed}
                             <button
@@ -315,7 +320,7 @@
                                 actionToArchive = action;
                                 action.showDropdown = false;
                               }}
-                              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                               role="menuitem"
                             >
                               Archive
@@ -326,7 +331,7 @@
                                   actionToDecrement = action;
                                   action.showDropdown = false;
                                 }}
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 role="menuitem"
                               >
                                 Decrement progress
@@ -338,7 +343,7 @@
                                 actionToUnarchive = action;
                                 action.showDropdown = false;
                               }}
-                              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                               role="menuitem"
                             >
                               Unarchive
@@ -349,7 +354,7 @@
                               actionToDelete = action;
                               action.showDropdown = false;
                             }}
-                            class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900"
                             role="menuitem"
                           >
                             Delete
@@ -361,7 +366,7 @@
                 </div>
                 
                 <div class="mt-3">
-                  <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
                     <div 
                       class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
                       style="width: {(action.currentCount / action.targetCount) * 100}%"
@@ -369,20 +374,20 @@
                   </div>
                 </div>
 
-                <p class="mt-3 text-sm text-gray-500">{action.description || 'No description'}</p>
+                <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">{action.description || 'No description'}</p>
                 
                 <div class="mt-4 flex justify-end gap-2">
                   {#if import.meta.env.DEV}
                     <button
                       on:click={() => recordProgress(action, 5)}
-                      class="px-4 py-3 text-base bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 min-w-[3rem]"
+                      class="px-4 py-3 text-base bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 min-w-[3rem]"
                     >
                       +5
                     </button>
                   {/if}
                   <button
                     on:click={() => recordProgress(action, 1)}
-                    class="px-4 py-3 text-base bg-green-100 text-green-800 rounded-md hover:bg-green-200 min-w-[3rem]"
+                    class="px-4 py-3 text-base bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-md hover:bg-green-200 dark:hover:bg-green-800 min-w-[3rem]"
                   >
                     +1
                   </button>
@@ -395,30 +400,30 @@
         <!-- Completed Actions -->
         {#if completedActions.length > 0}
           <div class="mt-12">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Completed Actions</h2>
+            <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-4">Done</h2>
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {#each completedActions as action}
-                <div class="bg-white rounded-lg shadow p-6 opacity-75">
+                <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-6 opacity-75">
                   <div class="flex justify-between items-start">
                     <div>
                       <div class="flex flex-wrap items-baseline gap-2">
-                        <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
-                        <span class="text-sm text-gray-600">{action.currentCount}/{action.targetCount}</span>
+                        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-100">{action.title}</h3>
+                        <span class="text-sm text-gray-500 dark:text-gray-300">{action.currentCount}/{action.targetCount}</span>
                       </div>
                       <div class="mt-2">
-                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
                           <div 
                             class="bg-green-600 h-2.5 rounded-full"
                             style="width: {(action.currentCount / action.targetCount) * 100}%"
                           ></div>
                         </div>
                       </div>
-                      <p class="mt-2 text-sm text-gray-500">{action.description || 'No description'}</p>
+                      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{action.description || 'No description'}</p>
                     </div>
                     <div class="relative">
                       <button
                         on:click={() => action.showDropdown = !action.showDropdown}
-                        class="text-gray-400 hover:text-gray-500"
+                        class="text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200"
                         aria-label="More options"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -426,7 +431,7 @@
                         </svg>
                       </button>
                       {#if action.showDropdown}
-                        <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                        <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
                           <div class="py-1" role="menu">
                             {#if !action.completed}
                               <button
@@ -434,7 +439,7 @@
                                   actionToArchive = action;
                                   action.showDropdown = false;
                                 }}
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 role="menuitem"
                               >
                                 Archive
@@ -445,7 +450,7 @@
                                     actionToDecrement = action;
                                     action.showDropdown = false;
                                   }}
-                                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                                   role="menuitem"
                                 >
                                   Decrement progress
@@ -457,7 +462,7 @@
                                   actionToUnarchive = action;
                                   action.showDropdown = false;
                                 }}
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 role="menuitem"
                               >
                                 Unarchive
@@ -468,7 +473,7 @@
                                 actionToDelete = action;
                                 action.showDropdown = false;
                               }}
-                              class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900"
                               role="menuitem"
                             >
                               Delete
@@ -480,7 +485,7 @@
                   </div>
                   
                   <div class="mt-4">
-                    <div class="text-sm text-gray-600 mt-1">
+                    <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                       {action.currentCount}/{action.targetCount} - Completed!
                     </div>
                   </div>
@@ -493,16 +498,16 @@
     </div>
 
     {#if actionToDelete}
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Action</h3>
-          <p class="text-sm text-gray-500 mb-6">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-700 rounded-lg p-6 max-w-sm w-full mx-4">
+          <h3 class="text-lg font-medium text-gray-700 dark:text-gray-100 mb-4">Delete Action</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
             Are you sure you want to delete "{actionToDelete.title}"? This action cannot be undone.
           </p>
           <div class="flex justify-end gap-3">
             <button
               on:click={() => actionToDelete = null}
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               Cancel
             </button>
@@ -518,16 +523,16 @@
     {/if}
 
     {#if actionToArchive}
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Archive Action</h3>
-          <p class="text-sm text-gray-500 mb-6">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-700 rounded-lg p-6 max-w-sm w-full mx-4">
+          <h3 class="text-lg font-medium text-gray-700 dark:text-gray-100 mb-4">Archive Action</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
             Are you sure you want to archive "{actionToArchive.title}"? This will mark it as completed.
           </p>
           <div class="flex justify-end gap-3">
             <button
               on:click={() => actionToArchive = null}
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               Cancel
             </button>
@@ -543,16 +548,16 @@
     {/if}
 
     {#if actionToUnarchive}
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Unarchive Action</h3>
-          <p class="text-sm text-gray-500 mb-6">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-700 rounded-lg p-6 max-w-sm w-full mx-4">
+          <h3 class="text-lg font-medium text-gray-700 dark:text-gray-100 mb-4">Unarchive Action</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
             Are you sure you want to unarchive "{actionToUnarchive.title}"? This will make it active again.
           </p>
           <div class="flex justify-end gap-3">
             <button
               on:click={() => actionToUnarchive = null}
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               Cancel
             </button>
@@ -568,16 +573,16 @@
     {/if}
 
     {#if actionToDecrement}
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Decrement Progress</h3>
-          <p class="text-sm text-gray-500 mb-6">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-700 rounded-lg p-6 max-w-sm w-full mx-4">
+          <h3 class="text-lg font-medium text-gray-700 dark:text-gray-100 mb-4">Decrement Progress</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
             Are you sure you want to decrement the progress of "{actionToDecrement.title}" by 1?
           </p>
           <div class="flex justify-end gap-3">
             <button
               on:click={() => actionToDecrement = null}
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               Cancel
             </button>
@@ -598,11 +603,11 @@
     <!-- Add celebration overlay -->
     {#if celebratingAction}
       <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-        <div class="bg-white rounded-lg shadow-xl p-8 transform transition-all duration-500 scale-100 animate-bounce">
+        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-xl p-8 transform transition-all duration-500 scale-100 animate-bounce">
           <div class="text-center">
             <div class="text-6xl mb-4 animate-spin">🎉</div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Congratulations!</h3>
-            <p class="text-lg text-gray-600">You've completed "{celebratingAction.title}"!</p>
+            <h3 class="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-2">Congratulations!</h3>
+            <p class="text-lg text-gray-500 dark:text-gray-300">You've completed "{celebratingAction.title}"!</p>
           </div>
         </div>
       </div>
