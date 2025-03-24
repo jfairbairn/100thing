@@ -15,11 +15,12 @@
   let showCreateForm = false;
   let celebratingAction: Action | null = null;
   let isDevMode = import.meta.env.DEV;
-  let isOffline = false;
+  let isOffline = actionsStore.isOffline();
 
   // Subscribe to the actions store
-  actionsStore.subscribe(value => {
+  actionsStore.subscribe((value) => {
     actions = value;
+    isOffline = actionsStore.isOffline();
   });
 
   $: activeActions = actions
