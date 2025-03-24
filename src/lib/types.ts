@@ -17,6 +17,7 @@ export interface Action {
   completed: boolean;
   createdAt: string;
   updatedAt: string;
+  showDropdown?: boolean;
 }
 
 export interface Progress {

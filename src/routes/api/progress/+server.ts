@@ -49,4 +49,43 @@ export const POST: RequestHandler = async ({ request }) => {
     .returning();
     
   return json({ progress: newProgress, action: updatedAction });
+};
+
+export const DELETE: RequestHandler = async ({ request }) => {
+  const { actionId } = await request.json();
+  
+  // Get the current action
+  const [currentAction] = await db.select()
+    .from(action)
+    .where(eq(action.id, actionId));
+    
+  if (!currentAction) {
+    return json({ error: 'Action not found' }, { status: 404 });
+  }
+
+  if (currentAction.completed) {
+    return json({ error: 'Cannot modify completed action' }, { status: 400 });
+  }
+  
+  // Calculate new count and ensure it doesn't go below 0
+  const newCount = Math.max(currentAction.currentCount - 1, 0);
+  
+  // Record the negative progress
+  const [newProgress] = await db.insert(progress)
+    .values({
+      actionId,
+      count: -1
+    })
+    .returning();
+    
+  // Update the action's current count
+  const [updatedAction] = await db.update(action)
+    .set({
+      currentCount: newCount,
+      completed: false
+    })
+    .where(eq(action.id, actionId))
+    .returning();
+    
+  return json({ progress: newProgress, action: updatedAction });
 }; 

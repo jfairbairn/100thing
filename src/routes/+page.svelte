@@ -8,10 +8,23 @@
   let newActionTitle = '';
   let newActionDescription = '';
   let actionToDelete: Action | null = null;
+  let actionToArchive: Action | null = null;
+  let actionToUnarchive: Action | null = null;
+  let actionToDecrement: Action | null = null;
   let showCreateForm = false;
   let celebratingAction: Action | null = null;
 
-  $: activeActions = actions.filter(a => !a.completed);
+  $: activeActions = actions
+    .filter(a => !a.completed)
+    .sort((a, b) => {
+      // If neither action has progress, maintain original order
+      if (a.currentCount === 0 && b.currentCount === 0) return 0;
+      // If only one action has no progress, it should come first
+      if (a.currentCount === 0) return -1;
+      if (b.currentCount === 0) return 1;
+      // For actions with progress, sort by current count (ascending)
+      return a.currentCount - b.currentCount;
+    });
   $: completedActions = actions.filter(a => a.completed);
 
   function celebrateCompletion(action: Action) {
@@ -32,7 +45,11 @@
 
   async function loadActions() {
     const response = await fetch(getApiUrl('/api/actions'));
-    actions = await response.json();
+    const data = await response.json();
+    actions = data.map((action: Action) => ({
+      ...action,
+      showDropdown: false
+    }));
   }
 
   async function createAction() {
@@ -87,6 +104,59 @@
       actions = actions.filter(a => a.id !== action.id);
       actionToDelete = null;
     }
+  }
+
+  async function archiveAction(action: Action) {
+    const response = await fetch(`/api/actions/${action.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completed: true
+      })
+    });
+    
+    if (response.ok) {
+      actions = actions.map(a => 
+        a.id === action.id ? { ...a, completed: true } : a
+      );
+      actionToArchive = null;
+    }
+  }
+
+  async function unarchiveAction(action: Action) {
+    const response = await fetch(`/api/actions/${action.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completed: false
+      })
+    });
+    
+    if (response.ok) {
+      actions = actions.map(a => 
+        a.id === action.id ? { ...a, completed: false } : a
+      );
+      actionToUnarchive = null;
+    }
+  }
+
+  async function decrementProgress(action: Action) {
+    if (action.completed) return;
+    
+    const response = await fetch('/api/progress', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actionId: action.id
+      })
+    });
+    
+    const { progress: newProgress, action: updatedAction } = await response.json();
+    
+    // Update the action in the actions array
+    actions = actions.map(a => 
+      a.id === updatedAction.id ? updatedAction : a
+    );
   }
 
   onMount(loadActions);
@@ -158,20 +228,73 @@
           <div class="bg-white rounded-lg shadow p-6">
             <div class="flex justify-between items-start">
               <div>
-                <div class="flex items-baseline gap-2">
+                <div class="flex flex-wrap items-baseline gap-2">
                   <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
                   <span class="text-sm text-gray-600">{action.currentCount}/{action.targetCount}</span>
                 </div>
               </div>
-              <button
-                on:click={() => actionToDelete = action}
-                class="text-red-600 hover:text-red-800"
-                aria-label="Delete action"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </button>
+              <div class="relative">
+                <button
+                  on:click={() => action.showDropdown = !action.showDropdown}
+                  class="text-gray-400 hover:text-gray-500"
+                  aria-label="More options"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
+                {#if action.showDropdown}
+                  <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                    <div class="py-1" role="menu">
+                      {#if !action.completed}
+                        <button
+                          on:click={() => {
+                            actionToArchive = action;
+                            action.showDropdown = false;
+                          }}
+                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          Archive
+                        </button>
+                        {#if action.currentCount > 0}
+                          <button
+                            on:click={() => {
+                              actionToDecrement = action;
+                              action.showDropdown = false;
+                            }}
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            role="menuitem"
+                          >
+                            Decrement progress
+                          </button>
+                        {/if}
+                      {:else if action.currentCount < action.targetCount}
+                        <button
+                          on:click={() => {
+                            actionToUnarchive = action;
+                            action.showDropdown = false;
+                          }}
+                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          Unarchive
+                        </button>
+                      {/if}
+                      <button
+                        on:click={() => {
+                          actionToDelete = action;
+                          action.showDropdown = false;
+                        }}
+                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        role="menuitem"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                {/if}
+              </div>
             </div>
             
             <div class="mt-3">
@@ -185,7 +308,15 @@
 
             <p class="mt-3 text-sm text-gray-500">{action.description || 'No description'}</p>
             
-            <div class="mt-4 flex justify-end">
+            <div class="mt-4 flex justify-end gap-2">
+              {#if import.meta.env.DEV}
+                <button
+                  on:click={() => recordProgress(action, 5)}
+                  class="px-4 py-3 text-base bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 min-w-[3rem]"
+                >
+                  +5
+                </button>
+              {/if}
               <button
                 on:click={() => recordProgress(action, 1)}
                 class="px-4 py-3 text-base bg-green-100 text-green-800 rounded-md hover:bg-green-200 min-w-[3rem]"
@@ -207,7 +338,7 @@
             <div class="bg-white rounded-lg shadow p-6 opacity-75">
               <div class="flex justify-between items-start">
                 <div>
-                  <div class="flex items-baseline gap-2">
+                  <div class="flex flex-wrap items-baseline gap-2">
                     <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
                     <span class="text-sm text-gray-600">{action.currentCount}/{action.targetCount}</span>
                   </div>
@@ -215,21 +346,74 @@
                     <div class="w-full bg-gray-200 rounded-full h-2.5">
                       <div 
                         class="bg-green-600 h-2.5 rounded-full"
-                        style="width: 100%"
+                        style="width: {(action.currentCount / action.targetCount) * 100}%"
                       ></div>
                     </div>
                   </div>
                   <p class="mt-2 text-sm text-gray-500">{action.description || 'No description'}</p>
                 </div>
-                <button
-                  on:click={() => actionToDelete = action}
-                  class="text-red-600 hover:text-red-800"
-                  aria-label="Delete action"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                  </svg>
-                </button>
+                <div class="relative">
+                  <button
+                    on:click={() => action.showDropdown = !action.showDropdown}
+                    class="text-gray-400 hover:text-gray-500"
+                    aria-label="More options"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    </svg>
+                  </button>
+                  {#if action.showDropdown}
+                    <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div class="py-1" role="menu">
+                        {#if !action.completed}
+                          <button
+                            on:click={() => {
+                              actionToArchive = action;
+                              action.showDropdown = false;
+                            }}
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            role="menuitem"
+                          >
+                            Archive
+                          </button>
+                          {#if action.currentCount > 0}
+                            <button
+                              on:click={() => {
+                                actionToDecrement = action;
+                                action.showDropdown = false;
+                              }}
+                              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              role="menuitem"
+                            >
+                              Decrement progress
+                            </button>
+                          {/if}
+                        {:else if action.currentCount < action.targetCount}
+                          <button
+                            on:click={() => {
+                              actionToUnarchive = action;
+                              action.showDropdown = false;
+                            }}
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            role="menuitem"
+                          >
+                            Unarchive
+                          </button>
+                        {/if}
+                        <button
+                          on:click={() => {
+                            actionToDelete = action;
+                            action.showDropdown = false;
+                          }}
+                          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          role="menuitem"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  {/if}
+                </div>
               </div>
               
               <div class="mt-4">
@@ -264,6 +448,84 @@
           class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
         >
           Delete
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if actionToArchive}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Archive Action</h3>
+      <p class="text-sm text-gray-500 mb-6">
+        Are you sure you want to archive "{actionToArchive.title}"? This will mark it as completed.
+      </p>
+      <div class="flex justify-end gap-3">
+        <button
+          on:click={() => actionToArchive = null}
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Cancel
+        </button>
+        <button
+          on:click={() => actionToArchive && archiveAction(actionToArchive)}
+          class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Archive
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if actionToUnarchive}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Unarchive Action</h3>
+      <p class="text-sm text-gray-500 mb-6">
+        Are you sure you want to unarchive "{actionToUnarchive.title}"? This will make it active again.
+      </p>
+      <div class="flex justify-end gap-3">
+        <button
+          on:click={() => actionToUnarchive = null}
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Cancel
+        </button>
+        <button
+          on:click={() => actionToUnarchive && unarchiveAction(actionToUnarchive)}
+          class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Unarchive
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if actionToDecrement}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Decrement Progress</h3>
+      <p class="text-sm text-gray-500 mb-6">
+        Are you sure you want to decrement the progress of "{actionToDecrement.title}" by 1?
+      </p>
+      <div class="flex justify-end gap-3">
+        <button
+          on:click={() => actionToDecrement = null}
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Cancel
+        </button>
+        <button
+          on:click={() => {
+            actionToDecrement && decrementProgress(actionToDecrement);
+            actionToDecrement = null;
+          }}
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Decrement
         </button>
       </div>
     </div>
