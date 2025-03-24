@@ -10,11 +10,12 @@ export const action = pgTable('action', {
 	id: serial('id').primaryKey(),
 	title: text('title').notNull(),
 	description: text('description'),
-	targetCount: integer('target_count').default(100).notNull(),
-	currentCount: integer('current_count').default(0).notNull(),
-	completed: boolean('completed').default(false).notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
+	status: text('status').notNull().default('active'),
+	targetCount: integer('target_count').notNull().default(100),
+	currentCount: integer('current_count').notNull().default(0),
+	completed: boolean('completed').notNull().default(false),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
 export const actionRelations = relations(action, ({ many }) => ({

@@ -3,6 +3,7 @@
   import type { Action } from '$lib/types';
   import confetti from 'canvas-confetti';
   import { getApiUrl } from '$lib/config';
+  import { actionsStore } from '$lib/stores/actions';
 
   let actions: Action[] = [];
   let newActionTitle = '';
@@ -13,6 +14,13 @@
   let actionToDecrement: Action | null = null;
   let showCreateForm = false;
   let celebratingAction: Action | null = null;
+  let isDevMode = import.meta.env.DEV;
+  let isOffline = false;
+
+  // Subscribe to the actions store
+  actionsStore.subscribe(value => {
+    actions = value;
+  });
 
   $: activeActions = actions
     .filter(a => !a.completed)
@@ -44,28 +52,21 @@
   }
 
   async function loadActions() {
-    const response = await fetch(getApiUrl('/api/actions'));
-    const data = await response.json();
-    actions = data.map((action: Action) => ({
-      ...action,
-      showDropdown: false
-    }));
+    // Actions are now managed by the store
   }
 
   async function createAction() {
     if (!newActionTitle.trim()) return;
     
-    const response = await fetch(getApiUrl('/api/actions'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: newActionTitle,
-        description: newActionDescription
-      })
+    await actionsStore.createAction({
+      title: newActionTitle,
+      description: newActionDescription,
+      status: 'active',
+      targetCount: 100,
+      currentCount: 0,
+      completed: false
     });
     
-    const newAction = await response.json();
-    actions = [...actions, newAction];
     newActionTitle = '';
     newActionDescription = '';
   }
@@ -73,21 +74,13 @@
   async function recordProgress(action: Action, count: number) {
     if (action.completed) return;
     
-    const response = await fetch('/api/progress', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        actionId: action.id,
-        count
-      })
-    });
+    const updatedAction = {
+      ...action,
+      currentCount: action.currentCount + count,
+      completed: action.currentCount + count >= action.targetCount
+    };
     
-    const { progress: newProgress, action: updatedAction } = await response.json();
-    
-    // Update the action in the actions array
-    actions = actions.map(a => 
-      a.id === updatedAction.id ? updatedAction : a
-    );
+    await actionsStore.updateAction(updatedAction);
 
     // Check if this update completed the action
     if (!action.completed && updatedAction.completed) {
@@ -96,67 +89,41 @@
   }
 
   async function deleteAction(action: Action) {
-    const response = await fetch(`/api/actions/${action.id}`, {
-      method: 'DELETE'
-    });
-    
-    if (response.ok) {
-      actions = actions.filter(a => a.id !== action.id);
-      actionToDelete = null;
-    }
+    await actionsStore.deleteAction(action.id);
+    actionToDelete = null;
   }
 
   async function archiveAction(action: Action) {
-    const response = await fetch(`/api/actions/${action.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        completed: true
-      })
-    });
-    
-    if (response.ok) {
-      actions = actions.map(a => 
-        a.id === action.id ? { ...a, completed: true } : a
-      );
-      actionToArchive = null;
-    }
+    const updatedAction = {
+      ...action,
+      completed: true
+    };
+    await actionsStore.updateAction(updatedAction);
+    actionToArchive = null;
   }
 
   async function unarchiveAction(action: Action) {
-    const response = await fetch(`/api/actions/${action.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        completed: false
-      })
-    });
-    
-    if (response.ok) {
-      actions = actions.map(a => 
-        a.id === action.id ? { ...a, completed: false } : a
-      );
-      actionToUnarchive = null;
-    }
+    const updatedAction = {
+      ...action,
+      completed: false
+    };
+    await actionsStore.updateAction(updatedAction);
+    actionToUnarchive = null;
   }
 
   async function decrementProgress(action: Action) {
-    if (action.completed) return;
-    
-    const response = await fetch('/api/progress', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        actionId: action.id
-      })
-    });
-    
-    const { progress: newProgress, action: updatedAction } = await response.json();
-    
-    // Update the action in the actions array
-    actions = actions.map(a => 
-      a.id === updatedAction.id ? updatedAction : a
-    );
+    const updatedAction = {
+      ...action,
+      currentCount: Math.max(0, action.currentCount - 1),
+      completed: false
+    };
+    await actionsStore.updateAction(updatedAction);
+    actionToDecrement = null;
+  }
+
+  function toggleOffline() {
+    isOffline = !isOffline;
+    actionsStore.setOffline(isOffline);
   }
 
   onMount(loadActions);
@@ -542,5 +509,17 @@
         <p class="text-lg text-gray-600">You've completed "{celebratingAction.title}"!</p>
       </div>
     </div>
+  </div>
+{/if}
+
+<!-- Add offline toggle in dev mode -->
+{#if isDevMode}
+  <div class="fixed top-4 right-4 z-50">
+    <button
+      on:click={toggleOffline}
+      class="px-4 py-2 rounded-md {isOffline ? 'bg-red-500' : 'bg-green-500'} text-white font-medium"
+    >
+      {isOffline ? 'Offline Mode' : 'Online Mode'}
+    </button>
   </div>
 {/if}
