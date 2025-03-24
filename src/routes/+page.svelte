@@ -6,6 +6,7 @@
   let newActionTitle = '';
   let newActionDescription = '';
   let actionToDelete: Action | null = null;
+  let showCreateForm = false;
 
   async function loadActions() {
     const response = await fetch('/api/actions');
@@ -69,29 +70,50 @@
       <p class="text-lg text-gray-600">Track your progress on meaningful actions</p>
     </div>
 
-    <!-- Action Creation -->
-    <div class="mt-8 bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Create New Action</h2>
-      <div class="space-y-4">
-        <input
-          type="text"
-          bind:value={newActionTitle}
-          placeholder="Action title"
-          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
-        <textarea
-          bind:value={newActionDescription}
-          placeholder="Action description"
-          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        ></textarea>
-        <button
-          on:click={createAction}
-          class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          Create Action
-        </button>
-      </div>
+    <!-- Create Action Button -->
+    <div class="mt-8 flex justify-end">
+      <button
+        on:click={() => showCreateForm = !showCreateForm}
+        class="inline-flex items-center px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 {showCreateForm ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500'}"
+        aria-label={showCreateForm ? "Hide create form" : "Show create form"}
+      >
+        {#if !showCreateForm}
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+        {/if}
+        {showCreateForm ? 'Cancel' : 'Create Action'}
+      </button>
     </div>
+
+    <!-- Action Creation -->
+    {#if showCreateForm}
+      <div class="mt-4 bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Create New Action</h2>
+        <div class="space-y-4">
+          <input
+            type="text"
+            bind:value={newActionTitle}
+            placeholder="Action title"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+          <textarea
+            bind:value={newActionDescription}
+            placeholder="Action description"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          ></textarea>
+          <button
+            on:click={() => {
+              createAction();
+              showCreateForm = false;
+            }}
+            class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Create Action
+          </button>
+        </div>
+      </div>
+    {/if}
 
     <!-- Actions List -->
     <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
