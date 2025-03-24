@@ -5,6 +5,7 @@
   let actions: Action[] = [];
   let newActionTitle = '';
   let newActionDescription = '';
+  let actionToDelete: Action | null = null;
 
   async function loadActions() {
     const response = await fetch('/api/actions');
@@ -47,6 +48,17 @@
     );
   }
 
+  async function deleteAction(action: Action) {
+    const response = await fetch(`/api/actions/${action.id}`, {
+      method: 'DELETE'
+    });
+    
+    if (response.ok) {
+      actions = actions.filter(a => a.id !== action.id);
+      actionToDelete = null;
+    }
+  }
+
   onMount(loadActions);
 </script>
 
@@ -85,8 +97,20 @@
     <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {#each actions as action}
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
-          <p class="mt-1 text-sm text-gray-500">{action.description || 'No description'}</p>
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
+              <p class="mt-1 text-sm text-gray-500">{action.description || 'No description'}</p>
+            </div>
+            <button
+              on:click={() => actionToDelete = action}
+              class="text-red-600 hover:text-red-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
           
           <div class="mt-4 flex items-center justify-between">
             <div class="text-sm">
@@ -112,3 +136,28 @@
     </div>
   </div>
 </div>
+
+{#if actionToDelete}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Action</h3>
+      <p class="text-sm text-gray-500 mb-6">
+        Are you sure you want to delete "{actionToDelete.title}"? This action cannot be undone.
+      </p>
+      <div class="flex justify-end gap-3">
+        <button
+          on:click={() => actionToDelete = null}
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Cancel
+        </button>
+        <button
+          on:click={() => actionToDelete && deleteAction(actionToDelete)}
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
