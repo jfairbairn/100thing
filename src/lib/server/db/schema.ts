@@ -3,11 +3,20 @@ import { relations } from 'drizzle-orm';
 
 export const user = pgTable('user', {
 	id: serial('id').primaryKey(),
-	age: integer('age')
+	email: text('email').notNull().unique(),
+	passwordHash: text('password_hash').notNull(),
+	name: text('name').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
+
+export const userRelations = relations(user, ({ many }) => ({
+	actions: many(action)
+}));
 
 export const action = pgTable('action', {
 	id: serial('id').primaryKey(),
+	userId: integer('user_id').references(() => user.id).notNull(),
 	title: text('title').notNull(),
 	description: text('description'),
 	status: text('status').notNull().default('active'),
@@ -18,7 +27,11 @@ export const action = pgTable('action', {
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
-export const actionRelations = relations(action, ({ many }) => ({
+export const actionRelations = relations(action, ({ one, many }) => ({
+	user: one(user, {
+		fields: [action.userId],
+		references: [user.id]
+	}),
 	progress: many(progress)
 }));
 

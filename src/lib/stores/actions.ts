@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import type { Action } from '$lib/types';
 import { getApiUrl } from '$lib/config';
+import { auth } from './auth';
 
 // Create a store for actions
 const createActionsStore = () => {
@@ -42,6 +43,30 @@ const createActionsStore = () => {
     }
   }
 
+  async function fetchWithAuth(url: string, options: RequestInit = {}) {
+    const token = auth.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch');
+    }
+
+    // For DELETE requests or responses with no content, don't try to parse JSON
+    if (options.method === 'DELETE' || response.status === 204) {
+      return null;
+    }
+
+    return response.json();
+  }
+
   // Sync with server when online
   async function syncWithServer() {
     if (isOffline) return;
@@ -57,14 +82,14 @@ const createActionsStore = () => {
           console.log('Processing change:', change);
           switch (change.type) {
             case 'create':
-              await fetch(getApiUrl('/api/actions'), {
+              await fetchWithAuth(getApiUrl('/api/actions'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(change.action)
               });
               break;
             case 'update':
-              await fetch(getApiUrl(`/api/actions/${change.action.id}`), {
+              await fetchWithAuth(getApiUrl(`/api/actions/${change.action.id}`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(change.action)
@@ -72,12 +97,9 @@ const createActionsStore = () => {
               break;
             case 'delete':
               console.log('Attempting to delete action:', change.action.id);
-              const response = await fetch(getApiUrl(`/api/actions/${change.action.id}`), {
+              await fetchWithAuth(getApiUrl(`/api/actions/${change.action.id}`), {
                 method: 'DELETE'
               });
-              if (!response.ok) {
-                throw new Error(`Failed to delete action: ${response.statusText}`);
-              }
               console.log('Delete request successful');
               break;
           }
@@ -109,11 +131,7 @@ const createActionsStore = () => {
       if (pendingChanges.length === 0) {
         console.log('All changes successful, fetching latest server state');
         // Then get the latest state from the server
-        const response = await fetch(getApiUrl('/api/actions'));
-        if (!response.ok) {
-          throw new Error(`Failed to fetch actions: ${response.statusText}`);
-        }
-        const serverActions = await response.json();
+        const serverActions = await fetchWithAuth(getApiUrl('/api/actions'));
         
         // Update the store with server state, ensuring deleted actions are removed
         const deletedActionIds = successfulChanges
@@ -147,94 +165,120 @@ const createActionsStore = () => {
     });
   }
 
-  return {
-    subscribe,
-    createAction: async (action: Omit<Action, 'id' | 'createdAt' | 'updatedAt'>) => {
-      if (isOffline) {
-        const newAction = {
-          ...action,
-          id: Date.now(), // Temporary ID
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        update(actions => [...actions, newAction]);
-        pendingChanges.push({ type: 'create', action: newAction });
-        savePendingChanges();
-        console.log('Created action offline:', newAction);
-        return newAction;
-      }
+  async function loadActions() {
+    try {
+      const actions = await fetchWithAuth(getApiUrl('/api/actions'));
+      set(actions);
+    } catch (error) {
+      console.error('Failed to load actions:', error);
+    }
+  }
 
-      const response = await fetch(getApiUrl('/api/actions'), {
+  async function createAction(action: Omit<Action, 'id' | 'createdAt' | 'updatedAt'>) {
+    try {
+      const newActions = await fetchWithAuth(getApiUrl('/api/actions'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(action)
       });
-      const newAction = await response.json();
-      update(actions => [...actions, newAction]);
-      return newAction;
-    },
-    updateAction: async (action: Action) => {
-      if (isOffline) {
-        update(actions => actions.map(a => a.id === action.id ? action : a));
-        pendingChanges.push({ type: 'update', action });
-        savePendingChanges();
-        console.log('Updated action offline:', action);
-        return action;
+      if (!Array.isArray(newActions) || newActions.length === 0) {
+        throw new Error('Invalid response from server');
       }
+      update(actions => [...actions, newActions[0]]);
+      return newActions[0];
+    } catch (error) {
+      console.error('Failed to create action:', error);
+      // Instead of throwing, we'll return null and let the UI handle the error
+      return null;
+    }
+  }
 
-      try {
-        const response = await fetch(getApiUrl(`/api/actions/${action.id}`), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(action)
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to update action: ${response.statusText}`);
-        }
-        
-        const updatedAction = await response.json();
-        update(actions => actions.map(a => a.id === updatedAction.id ? updatedAction : a));
-        return updatedAction;
-      } catch (error) {
-        console.error('Failed to update action:', error);
-        // In case of error, still update the local state
-        update(actions => actions.map(a => a.id === action.id ? action : a));
-        return action;
-      }
-    },
-    deleteAction: async (actionId: number) => {
-      if (isOffline) {
-        console.log('Deleting action offline:', actionId);
-        // Find the action before removing it
-        const action = currentActions.find(a => a.id === actionId);
-        if (action) {
-          console.log('Found action to delete:', action);
-          // Add to pending changes first
-          pendingChanges.push({ type: 'delete', action });
-          savePendingChanges();
-          console.log('Added delete to pending changes:', pendingChanges);
-          // Then update the store
-          update(actions => actions.filter(a => a.id !== actionId));
-        } else {
-          console.log('No action found with id:', actionId);
-        }
-        return;
-      }
-
-      await fetch(getApiUrl(`/api/actions/${actionId}`), {
+  async function deleteAction(action: Action) {
+    try {
+      await fetchWithAuth(getApiUrl(`/api/actions/${action.id}`), {
         method: 'DELETE'
       });
-      update(actions => actions.filter(a => a.id !== actionId));
-    },
-    setOffline: (offline: boolean) => {
-      console.log('Setting offline state:', offline);
-      isOffline = offline;
-      if (!offline) {
-        syncWithServer();
-      }
-    },
-    isOffline: () => isOffline
+      update(actions => actions.filter(a => a.id !== action.id));
+    } catch (error) {
+      console.error('Failed to delete action:', error);
+      throw error;
+    }
+  }
+
+  async function archiveAction(action: Action) {
+    try {
+      const [updatedAction] = await fetchWithAuth(getApiUrl('/api/actions'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: action.id, completed: true })
+      });
+      update(actions => actions.map(a => a.id === action.id ? updatedAction : a));
+    } catch (error) {
+      console.error('Failed to archive action:', error);
+      throw error;
+    }
+  }
+
+  async function unarchiveAction(action: Action) {
+    try {
+      const [updatedAction] = await fetchWithAuth(getApiUrl('/api/actions'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: action.id, completed: false })
+      });
+      update(actions => actions.map(a => a.id === action.id ? updatedAction : a));
+    } catch (error) {
+      console.error('Failed to unarchive action:', error);
+      throw error;
+    }
+  }
+
+  async function recordProgress(action: Action, count: number) {
+    try {
+      const response = await fetchWithAuth(getApiUrl('/api/progress'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionId: action.id, count })
+      });
+      update(actions => actions.map(a => a.id === action.id ? response.action : a));
+      return response;
+    } catch (error) {
+      console.error('Failed to record progress:', error);
+      throw error;
+    }
+  }
+
+  async function decrementProgress(action: Action) {
+    try {
+      const response = await fetchWithAuth(getApiUrl('/api/progress'), {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionId: action.id })
+      });
+      update(actions => actions.map(a => a.id === action.id ? response.action : a));
+      return response;
+    } catch (error) {
+      console.error('Failed to decrement progress:', error);
+      throw error;
+    }
+  }
+
+  function toggleOffline() {
+    isOffline = !isOffline;
+  }
+
+  return {
+    subscribe,
+    loadActions,
+    createAction,
+    deleteAction,
+    archiveAction,
+    unarchiveAction,
+    recordProgress,
+    decrementProgress,
+    toggleOffline,
+    isOffline: () => isOffline,
+    syncWithServer
   };
 };
 

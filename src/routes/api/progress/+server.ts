@@ -2,18 +2,21 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/db';
 import { progress, action } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
   const { actionId, count } = await request.json();
   
-  // Get the current action
+  // Get the current action and verify ownership
   const [currentAction] = await db.select()
     .from(action)
-    .where(eq(action.id, actionId));
+    .where(and(
+      eq(action.id, actionId),
+      eq(action.userId, locals.userId)
+    ));
     
   if (!currentAction) {
-    return json({ error: 'Action not found' }, { status: 404 });
+    return json({ error: 'Action not found or unauthorized' }, { status: 404 });
   }
 
   if (currentAction.completed) {
@@ -51,16 +54,19 @@ export const POST: RequestHandler = async ({ request }) => {
   return json({ progress: newProgress, action: updatedAction });
 };
 
-export const DELETE: RequestHandler = async ({ request }) => {
+export const DELETE: RequestHandler = async ({ request, locals }) => {
   const { actionId } = await request.json();
   
-  // Get the current action
+  // Get the current action and verify ownership
   const [currentAction] = await db.select()
     .from(action)
-    .where(eq(action.id, actionId));
+    .where(and(
+      eq(action.id, actionId),
+      eq(action.userId, locals.userId)
+    ));
     
   if (!currentAction) {
-    return json({ error: 'Action not found' }, { status: 404 });
+    return json({ error: 'Action not found or unauthorized' }, { status: 404 });
   }
 
   if (currentAction.completed) {
@@ -88,4 +94,28 @@ export const DELETE: RequestHandler = async ({ request }) => {
     .returning();
     
   return json({ progress: newProgress, action: updatedAction });
+};
+
+export const GET: RequestHandler = async ({ request, locals }) => {
+  const { actionId } = await request.json();
+  
+  // Verify ownership through the action
+  const [existingAction] = await db.select()
+    .from(action)
+    .where(and(
+      eq(action.id, actionId),
+      eq(action.userId, locals.userId)
+    ));
+    
+  if (!existingAction) {
+    return json({ error: 'Action not found or unauthorized' }, { status: 404 });
+  }
+
+  // Get all progress records for this action
+  const progressRecords = await db.select()
+    .from(progress)
+    .where(eq(progress.actionId, actionId))
+    .orderBy(progress.createdAt);
+
+  return json(progressRecords);
 }; 
