@@ -3,12 +3,21 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/db';
 import { action } from '$lib/server/db/schema';
 
+export const GET: RequestHandler = async () => {
+  const allActions = await db.query.action.findMany({
+    with: {
+      progress: true
+    }
+  });
+  
+  return json(allActions);
+};
+
 export const POST: RequestHandler = async ({ request }) => {
-  const { projectId, title, description } = await request.json();
+  const { title, description } = await request.json();
   
   const [newAction] = await db.insert(action)
     .values({
-      projectId,
       title,
       description,
       targetCount: 100,

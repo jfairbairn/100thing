@@ -6,21 +6,8 @@ export const user = pgTable('user', {
 	age: integer('age')
 });
 
-export const project = pgTable('project', {
-	id: serial('id').primaryKey(),
-	name: text('name').notNull(),
-	description: text('description'),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
-});
-
-export const projectRelations = relations(project, ({ many }) => ({
-	actions: many(action)
-}));
-
 export const action = pgTable('action', {
 	id: serial('id').primaryKey(),
-	projectId: integer('project_id').references(() => project.id).notNull(),
 	title: text('title').notNull(),
 	description: text('description'),
 	targetCount: integer('target_count').default(100).notNull(),
@@ -29,11 +16,7 @@ export const action = pgTable('action', {
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
-export const actionRelations = relations(action, ({ one, many }) => ({
-	project: one(project, {
-		fields: [action.projectId],
-		references: [project.id]
-	}),
+export const actionRelations = relations(action, ({ many }) => ({
 	progress: many(progress)
 }));
 

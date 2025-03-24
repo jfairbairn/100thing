@@ -9,7 +9,6 @@ export interface Project {
 
 export interface Action {
   id: number;
-  projectId: number;
   title: string;
   description?: string;
   status: string;
