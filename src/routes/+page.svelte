@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { Action } from '$lib/types';
   import confetti from 'canvas-confetti';
+  import { getApiUrl } from '$lib/config';
 
   let actions: Action[] = [];
   let newActionTitle = '';
@@ -30,14 +31,14 @@
   }
 
   async function loadActions() {
-    const response = await fetch('/api/actions');
+    const response = await fetch(getApiUrl('/api/actions'));
     actions = await response.json();
   }
 
   async function createAction() {
     if (!newActionTitle.trim()) return;
     
-    const response = await fetch('/api/actions', {
+    const response = await fetch(getApiUrl('/api/actions'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

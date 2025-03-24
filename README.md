@@ -29,7 +29,15 @@ cd 100thing
 pnpm install
 ```
 
-3. Set up the database:
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
+Edit `.env` with your configuration:
+- `DATABASE_URL`: Your PostgreSQL connection string
+- `VITE_API_URL`: The URL of your API server (default: http://localhost:5173 for development)
+
+4. Set up the database:
    - Option 1: Using Docker (recommended)
    ```bash
    pnpm db:start
@@ -39,12 +47,12 @@ pnpm install
    - Create a database named `100thing`
    - Update the `DATABASE_URL` in `.env` if needed
 
-4. Initialize the database:
+5. Initialize the database:
 ```bash
 pnpm db:push
 ```
 
-5. Start the development server:
+6. Start the development server:
 ```bash
 pnpm dev
 ```
