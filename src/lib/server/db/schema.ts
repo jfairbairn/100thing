@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const user = pgTable('user', {
@@ -12,6 +12,7 @@ export const action = pgTable('action', {
 	description: text('description'),
 	targetCount: integer('target_count').default(100).notNull(),
 	currentCount: integer('current_count').default(0).notNull(),
+	completed: boolean('completed').default(false).notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });

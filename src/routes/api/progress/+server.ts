@@ -15,19 +15,35 @@ export const POST: RequestHandler = async ({ request }) => {
   if (!currentAction) {
     return json({ error: 'Action not found' }, { status: 404 });
   }
+
+  if (currentAction.completed) {
+    return json({ error: 'Cannot add progress to completed action' }, { status: 400 });
+  }
+  
+  // Calculate new count and ensure it doesn't exceed 100
+  const newCount = Math.min(currentAction.currentCount + count, currentAction.targetCount);
+  const actualProgress = newCount - currentAction.currentCount;
+  
+  if (actualProgress <= 0) {
+    return json({ error: 'Action already at maximum progress' }, { status: 400 });
+  }
   
   // Record the progress
   const [newProgress] = await db.insert(progress)
     .values({
       actionId,
-      count
+      count: actualProgress
     })
     .returning();
     
-  // Update the action's current count
+  // Check for completion
+  const isCompleted = newCount >= currentAction.targetCount;
+    
+  // Update the action's current count and completion status
   const [updatedAction] = await db.update(action)
     .set({
-      currentCount: currentAction.currentCount + count
+      currentCount: newCount,
+      completed: isCompleted
     })
     .where(eq(action.id, actionId))
     .returning();

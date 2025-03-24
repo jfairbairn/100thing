@@ -8,6 +8,9 @@
   let actionToDelete: Action | null = null;
   let showCreateForm = false;
 
+  $: activeActions = actions.filter(a => !a.completed);
+  $: completedActions = actions.filter(a => a.completed);
+
   async function loadActions() {
     const response = await fetch('/api/actions');
     actions = await response.json();
@@ -32,6 +35,8 @@
   }
 
   async function recordProgress(action: Action, count: number) {
+    if (action.completed) return;
+    
     const response = await fetch('/api/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -115,55 +120,99 @@
       </div>
     {/if}
 
-    <!-- Actions List -->
-    <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {#each actions as action}
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
-              <p class="mt-1 text-sm text-gray-500">{action.description || 'No description'}</p>
-            </div>
-            <button
-              on:click={() => actionToDelete = action}
-              class="text-red-600 hover:text-red-800"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-          
-          <div class="mt-4 flex items-center justify-between">
-            <div class="flex-1 mr-4">
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
-                  style="width: {(action.currentCount / action.targetCount) * 100}%"
-                ></div>
+    <!-- Active Actions -->
+    <div class="mt-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">Active Actions</h2>
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {#each activeActions as action}
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
+                <p class="mt-1 text-sm text-gray-500">{action.description || 'No description'}</p>
               </div>
-              <div class="text-sm text-gray-600 mt-1">
-                {action.currentCount}/{action.targetCount}
-              </div>
-            </div>
-            <div class="flex gap-2">
               <button
-                on:click={() => recordProgress(action, 1)}
-                class="px-2 py-1 text-sm bg-green-100 text-green-800 rounded-md hover:bg-green-200"
+                on:click={() => actionToDelete = action}
+                class="text-red-600 hover:text-red-800"
+                aria-label="Delete action"
               >
-                +1
-              </button>
-              <button
-                on:click={() => recordProgress(action, 5)}
-                class="px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200"
-              >
-                +5
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
               </button>
             </div>
+            
+            <div class="mt-4 flex items-center justify-between">
+              <div class="flex-1 mr-4">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+                    style="width: {(action.currentCount / action.targetCount) * 100}%"
+                  ></div>
+                </div>
+                <div class="text-sm text-gray-600 mt-1">
+                  {action.currentCount}/{action.targetCount}
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  on:click={() => recordProgress(action, 1)}
+                  class="px-2 py-1 text-sm bg-green-100 text-green-800 rounded-md hover:bg-green-200"
+                >
+                  +1
+                </button>
+                <button
+                  on:click={() => recordProgress(action, 5)}
+                  class="px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200"
+                >
+                  +5
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      </div>
     </div>
+
+    <!-- Completed Actions -->
+    {#if completedActions.length > 0}
+      <div class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Completed Actions</h2>
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {#each completedActions as action}
+            <div class="bg-white rounded-lg shadow p-6 opacity-75">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-lg font-medium text-gray-900">{action.title}</h3>
+                  <p class="mt-1 text-sm text-gray-500">{action.description || 'No description'}</p>
+                </div>
+                <button
+                  on:click={() => actionToDelete = action}
+                  class="text-red-600 hover:text-red-800"
+                  aria-label="Delete action"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    class="bg-green-600 h-2.5 rounded-full"
+                    style="width: 100%"
+                  ></div>
+                </div>
+                <div class="text-sm text-gray-600 mt-1">
+                  {action.currentCount}/{action.targetCount} - Completed!
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
 

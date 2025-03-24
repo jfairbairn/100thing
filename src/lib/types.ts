@@ -14,6 +14,7 @@ export interface Action {
   status: string;
   targetCount: number;
   currentCount: number;
+  completed: boolean;
   createdAt: string;
   updatedAt: string;
 }
