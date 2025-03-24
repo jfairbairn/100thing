@@ -135,8 +135,16 @@
           </div>
           
           <div class="mt-4 flex items-center justify-between">
-            <div class="text-sm">
-              Progress: {action.currentCount}/{action.targetCount}
+            <div class="flex-1 mr-4">
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+                  style="width: {(action.currentCount / action.targetCount) * 100}%"
+                ></div>
+              </div>
+              <div class="text-sm text-gray-600 mt-1">
+                {action.currentCount}/{action.targetCount}
+              </div>
             </div>
             <div class="flex gap-2">
               <button
