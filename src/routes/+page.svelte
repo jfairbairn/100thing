@@ -92,6 +92,10 @@
   onMount(loadActions);
 </script>
 
+<div class="api-url-display bg-gray-100 p-2 text-sm text-gray-600 rounded-md mb-4">
+  API URL: {getApiUrl('') || 'Not set'}
+</div>
+
 <div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
   <div class="max-w-7xl mx-auto">
     <div class="text-center">
